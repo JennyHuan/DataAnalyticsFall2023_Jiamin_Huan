@@ -1,0 +1,41 @@
+# MASS Library
+install.packages("MASS")
+library(MASS)
+attach(Boston)
+?Boston
+head(Boston)
+dim(Boston)
+names(Boston)
+str(Boston)
+nrow(Boston)
+ncol(Boston)
+summary(Boston)
+summary(Boston$crim)
+
+# ISLR Library - Auto Dataset
+install.packages("ISLR")
+library(ISLR)
+data("Auto")
+head(Auto)
+names(Auto)
+summary(Auto)
+summary(Auto$mpg)
+fivenum(Auto$mpg)
+boxplot(Auto$mpg)
+hist(Auto$mpg)
+summary(Auto$horsepower)
+summary(Auto$weight)
+fivenum(Auto$weight)
+boxplot(Auto$weight)
+mean(Auto$weight)
+median(Auto$weight)
+
+# In class work
+data1 <- read.csv(file.choose(), skip = 1)
+data1
+is.na(data1)
+attach(data1)
+summary(EPI)
+boxplot(EPI)
+fivenum(EPI)
+hist(EPI)
