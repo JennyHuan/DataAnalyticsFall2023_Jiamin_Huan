@@ -44,70 +44,29 @@ image(t(data_Matrix_ordered)[, nrow(data_Matrix_ordered):1])
 plot(rowMeans(data_Matrix_ordered), 40:1, , xlab = "The Row Mean", ylab = "Row", pch =19)
 plot(rowMeans(data_Matrix_ordered), xlab = "Column", ylab = "Column Mean", pch =19)
 
-# kmeans 1
-#fragment
-set.seed(123)
-sim.xy <- function(n, mean, sd) cbind(rnorm(n, mean[1], sd[1]),rnorm(n, mean[2],sd[2]))
-# generate three clouds of points, well separated in the 2D plane
-xy <- rbind(sim.xy(100, c(0,0), c(.2,.2)),sim.xy(100, c(2.5,0), c(.4,.2)),sim.xy(100, c(1.25,.5), c(.3,.2)))
-xy[1,] <- c(0,2)     # convert 1st obs. to an outlying value
-#
-km3 <- kmeans(xy, 3) # ask for three clusters
-plot(xy, col=km3$cluster)
-cex=2.0
-points(km3$centers, pch=3)
-#
-km4 <- kmeans(xy, 4) # ask for four clusters
-cex=1.0
-plot(xy, col=km4$cluster)
-cex=2.0
-points(km4$centers, pch=3)
+# ctree2
+require(party)
+pairs(~ Fertility + Education + Catholic, data = swiss, subset = Education < 20, main = "Swiss data, Education < 20")
+swiss_ctree <- ctree(Fertility ~ Agriculture + Education + Catholic, data = swiss)
+plot(swiss_ctree)
 
-# kmeans 2
-data("iris")
-iris.dist <- dist(iris[, -5])
-iris.mds <- cmdscale(iris.dist)
-# iris$Species is the 5th column
-c.chars <- c("*", "o", "+")[as.integer(iris$Species)]
-# iris$Species is the 5th column
-# KMEANSRESULT is the variable you used in your kmeans lab assignment for the return variable.
-a.cols <- rainbow(3)[km4$cluster]
-# plot of chunk unnamed-chunk-5
-plot(iris.mds, col = a.cols, pch = c.chars, xlab = "X", ylab = "Y")
+# kknn1
+require(kknn)
+data(iris)
+m <- dim(iris)[1]
+val <- sample(1:m, size = round(m/3), replace = FALSE, 
+              prob = rep(1/m, m)) 
+iris.learn <- iris[-val,]
+iris.valid <- iris[val,]
+iris.kknn <- kknn(Species~., iris.learn, iris.valid, distance = 1,
+                  kernel = "triangular")
+summary(iris.kknn)
+fit <- fitted(iris.kknn)
+table(iris.valid$Species, fit)
+pcol <- as.character(as.numeric(iris.valid$Species))
+pairs(iris.valid[1:4], pch = pcol, col = c("green3", "red")[(iris.valid$Species != fit)+1])
 
-# knn1
-# read data in
-nyt1<-read.csv("nyt1.csv")
-# eliminate zeros
-nyt1<-nyt1[which(nyt1$Impressions>0 & nyt1$Clicks>0 & nyt1$Age>0),]
-## or could just have this: nyt1<-nyt1[which(nyt1$Impressions>0 & nyt1$Age>0),]
-nnyt1<-dim(nyt1)[1]
-#90% to train
-sampling.rate=0.9
-#remainder to test
-num.test.set.labels=nnyt1*(1.-sampling.rate)
-#construct a random set of training indices (training)
-training <-sample(1:nnyt1,sampling.rate*nnyt1, replace=FALSE)
-#build the training set (train)
-train<-subset(nyt1[training,],select=c(Age,Impressions))
-#construct the remaining test indices (testing)
-testing<-setdiff(1:nnyt1,training)
-#define the test set
-test<-subset(nyt1[testing,],select=c(Age,Impressions))
-#construct labels for another variable (Gender) in the training set
-cg<-nyt1$Gender[training]
-#construct true labels the other variable in the test set
-true.labels<-nyt1$Gender[testing]
-#run the classifier, can change k
-classif<-knn(train,test,cg,k=5)
-#view the classifier
-classif
-#looks at attriburtes
-attributes(.Last.value)
-
-# more in later classes
-
-# knn2
+# kknn2
 require(kknn)
 data(ionosphere)
 ionosphere.learn <- ionosphere[1:200,]
@@ -121,17 +80,42 @@ table(predict(fit.train1, ionosphere.valid), ionosphere.valid$class)
 	kernel = c("triangular", "rectangular", "epanechnikov", "optimal"), distance = 2))
 table(predict(fit.train2, ionosphere.valid), ionosphere.valid$class)
 
-data(iris)
-m <- dim(iris)[1]
-val <- sample(1:m, size = round(m/3), replace = FALSE, 
-	prob = rep(1/m, m)) 
-iris.learn <- iris[-val,]
-iris.valid <- iris[val,]
-iris.kknn <- kknn(Species~., iris.learn, iris.valid, distance = 1,
-	kernel = "triangular")
-summary(iris.kknn)
-fit <- fitted(iris.kknn)
-table(iris.valid$Species, fit)
-pcol <- as.character(as.numeric(iris.valid$Species))
-pairs(iris.valid[1:4], pch = pcol, col = c("green3", "red")
-	[(iris.valid$Species != fit)+1])
+# kknn3
+data(swiss)
+pairs(~ Fertility + Education + Catholic, data = swiss, subset = Education < 20,
+      main = "Swiss data, Education < 20")
+
+# kmeans1
+data(swiss)
+sclass <- kmeans(swiss[2:6], 3) 
+table(sclass$cluster, swiss[,1])    
+
+# nyt1
+nyt1<-read.csv("nyt1.csv")
+nyt1<-nyt1[which(nyt1$Impressions>0 & nyt1$Clicks>0 & nyt1$Age>0),]
+nnyt1<-dim(nyt1)[1]		# shrink it down!
+sampling.rate=0.9
+num.test.set.labels=nnyt1*(1.-sampling.rate)
+training <-sample(1:nnyt1,sampling.rate*nnyt1, replace=FALSE)
+train<-subset(nyt1[training,],select=c(Age,Impressions))
+testing<-setdiff(1:nnyt1,training)
+test<-subset(nyt1[testing,],select=c(Age,Impressions))
+cg<-nyt1$Gender[training]
+true.labels<-nyt1$Gender[testing]
+library(class)
+classif<-knn(train,test,cg,k=5) #
+classif
+attributes(.Last.value) 
+
+data("Titanic")
+library(rpart)
+tree_model <- rpart(Survived ~ ., data = Titanic)
+plot(tree_model)
+text(tree_model, pretty = 0)
+library(party)
+ctree_model <- ctree(Survived ~ ., data = Titanic)
+plot(ctree_model)
+titanic_df <- as.data.frame(Titanic)
+cluster_data <- titanic_df[, -c(1, 2)]
+hclust_result <- hclust(dist(cluster_data))
+plot(hclust_result)
